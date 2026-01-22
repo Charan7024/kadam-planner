@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function VibePlanner() {
+export default function KadamsPlanner() {
   const [tasks, setTasks] = useState([]);
   const [taskInput, setTaskInput] = useState('');
   const [taskPriority, setTaskPriority] = useState('medium');
@@ -15,7 +15,7 @@ export default function VibePlanner() {
   // Pomodoro timer states
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerMode, setTimerMode] = useState('work'); // 'work' or 'break'
+  const [timerMode, setTimerMode] = useState('work');
   
   // Streak tracking
   const [streak, setStreak] = useState(0);
@@ -82,7 +82,7 @@ export default function VibePlanner() {
 
   const currentTheme = themes[theme];
 
-  // Load data from localStorage on mount
+  // Load data from localStorage
   useEffect(() => {
     const savedTasks = localStorage.getItem('kadamsplannerTasks');
     const savedNotes = localStorage.getItem('kadamsplannerNotes');
@@ -104,7 +104,7 @@ export default function VibePlanner() {
     checkAndAddRecurringTasks();
   }, []);
 
-  // Pomodoro timer effect
+  // Pomodoro timer
   useEffect(() => {
     let interval = null;
     if (isTimerRunning && pomodoroTime > 0) {
@@ -113,7 +113,6 @@ export default function VibePlanner() {
       }, 1000);
     } else if (pomodoroTime === 0) {
       setIsTimerRunning(false);
-      // Play notification sound or show alert
       if (timerMode === 'work') {
         alert('🎉 Great work! Time for a break!');
         setTimerMode('break');
@@ -127,35 +126,15 @@ export default function VibePlanner() {
     return () => clearInterval(interval);
   }, [isTimerRunning, pomodoroTime, timerMode]);
 
-  // Save data to localStorage
+  // Save data
+  useEffect(() => { localStorage.setItem('kadamsplannerTasks', JSON.stringify(tasks)); }, [tasks]);
+  useEffect(() => { localStorage.setItem('kadamsplannerNotes', notes); }, [notes]);
+  useEffect(() => { localStorage.setItem('kadamsplannerVibe', currentVibe); }, [currentVibe]);
+  useEffect(() => { localStorage.setItem('kadamsplannerMood', currentMood); }, [currentMood]);
+  useEffect(() => { localStorage.setItem('kadamsplannerTheme', theme); }, [theme]);
+  useEffect(() => { localStorage.setItem('kadamsplannerStreak', streak.toString()); }, [streak]);
   useEffect(() => {
-    localStorage.setItem('kadamsplannerTasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('kadamsplannerNotes', notes);
-  }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem('kadamsplannerVibe', currentVibe);
-  }, [currentVibe]);
-
-  useEffect(() => {
-    localStorage.setItem('kadamsplannerMood', currentMood);
-  }, [currentMood]);
-
-  useEffect(() => {
-    localStorage.setItem('kadamsplannerTheme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem('kadamsplannerStreak', streak.toString());
-  }, [streak]);
-
-  useEffect(() => {
-    if (lastCompletionDate) {
-      localStorage.setItem('kadamsplannerLastDate', lastCompletionDate);
-    }
+    if (lastCompletionDate) localStorage.setItem('kadamsplannerLastDate', lastCompletionDate);
   }, [lastCompletionDate]);
 
   const updateDate = () => {
@@ -180,9 +159,7 @@ export default function VibePlanner() {
           
           if (shouldAdd) {
             const exists = allTasks.some(t => 
-              t.text === task.text && 
-              !t.completed && 
-              t.createdDate === today
+              t.text === task.text && !t.completed && t.createdDate === today
             );
             
             if (!exists) {
@@ -226,11 +203,8 @@ export default function VibePlanner() {
     );
     setTasks(updatedTasks);
     
-    // Update streak when completing a task
     const completedToday = updatedTasks.some(t => t.completed);
-    if (completedToday) {
-      updateStreak();
-    }
+    if (completedToday) updateStreak();
   };
 
   const updateStreak = () => {
@@ -238,7 +212,7 @@ export default function VibePlanner() {
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     
     if (lastCompletionDate === today) {
-      return; // Already counted today
+      return;
     } else if (lastCompletionDate === yesterday || lastCompletionDate === null) {
       setStreak(streak + 1);
       setLastCompletionDate(today);
@@ -252,10 +226,8 @@ export default function VibePlanner() {
     setTasks(tasks.filter(task => task.id !== id));
   };
 
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
-  };
-
+  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
+  
   const resetTimer = () => {
     setIsTimerRunning(false);
     setPomodoroTime(timerMode === 'work' ? 25 * 60 : 5 * 60);
@@ -298,51 +270,89 @@ export default function VibePlanner() {
     low: '#6bcf7f'
   };
 
-  return (
-    <div className="min-h-screen p-4 md:p-8" style={{
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      padding: '2rem 1rem',
       background: currentTheme.bgGradient,
       fontFamily: "'DM Sans', sans-serif",
       transition: 'background 0.5s ease'
-    }}>
+    },
+    maxWidth: {
+      maxWidth: '1400px',
+      margin: '0 auto',
+      position: 'relative',
+      zIndex: 1
+    },
+    header: {
+      textAlign: 'center',
+      marginBottom: '2rem'
+    },
+    title: {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+      fontWeight: 700,
+      color: currentTheme.textPrimary,
+      letterSpacing: '-0.02em',
+      marginBottom: '0.5rem'
+    },
+    tagline: {
+      fontSize: '1.1rem',
+      letterSpacing: '0.05em',
+      color: currentTheme.textSecondary
+    },
+    themeSelector: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '0.5rem',
+      marginBottom: '1.5rem',
+      flexWrap: 'wrap'
+    },
+    dateCard: {
+      background: currentTheme.bgSecondary,
+      padding: '1.5rem',
+      borderRadius: '24px',
+      boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+      marginBottom: '1.5rem',
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '1rem'
+    },
+    mainGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: '1.5rem'
+    },
+    card: {
+      background: currentTheme.bgSecondary,
+      padding: '2rem',
+      borderRadius: '24px',
+      boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+    },
+    cardTitle: {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: '1.8rem',
+      marginBottom: '1.5rem',
+      color: currentTheme.textPrimary,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    }
+  };
+
+  return (
+    <div style={styles.container}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap');
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes taskSlideIn {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
         
         @keyframes float {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
           33% { transform: translate(-30px, 30px) rotate(5deg); }
           66% { transform: translate(20px, -20px) rotate(-5deg); }
         }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        
-        .container { animation: fadeIn 0.8s ease-out; }
-        .header { animation: slideDown 0.6s ease-out; }
-        .date-card { animation: slideUp 0.6s ease-out 0.2s backwards; }
-        .main-grid { animation: slideUp 0.6s ease-out 0.3s backwards; }
-        .task-item { animation: taskSlideIn 0.4s ease-out; }
         
         .floating-orb {
           position: fixed;
@@ -356,45 +366,45 @@ export default function VibePlanner() {
           z-index: 0;
           transition: background 0.5s ease;
         }
-
-        .timer-running {
-          animation: pulse 2s ease-in-out infinite;
+        
+        .card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+        
+        @media (max-width: 768px) {
+          .main-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
       `}</style>
 
       <div className="floating-orb" />
 
-      <div className="max-w-7xl mx-auto relative z-10 container">
-        {/* Header */}
-        <header className="text-center mb-8 header">
-          <h1 className="text-4xl md:text-6xl font-bold mb-2" style={{
-            fontFamily: "'Playfair Display', serif",
-            color: currentTheme.textPrimary,
-            letterSpacing: '-0.02em'
-          }}>
-            Kadams Planner ✨
-          </h1>
-          <p className="text-base md:text-lg" style={{ 
-            letterSpacing: '0.05em',
-            color: currentTheme.textSecondary
-          }}>
-            Your intentional daily companion
-          </p>
+      <div style={styles.maxWidth}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>Kadams Planner ✨</h1>
+          <p style={styles.tagline}>Your intentional daily companion</p>
         </header>
 
         {/* Theme Selector */}
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
+        <div style={styles.themeSelector}>
           {Object.keys(themes).map(themeName => (
             <button
               key={themeName}
               onClick={() => setTheme(themeName)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                theme === themeName ? 'ring-2' : 'opacity-60 hover:opacity-100'
-              }`}
               style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '24px',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
                 background: themes[themeName].accent,
                 color: themeName === 'dark' ? '#f0f0f0' : '#fff',
-                ringColor: themes[themeName].accentDark
+                opacity: theme === themeName ? 1 : 0.6,
+                transform: theme === themeName ? 'scale(1.05)' : 'scale(1)'
               }}
             >
               {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
@@ -402,103 +412,127 @@ export default function VibePlanner() {
           ))}
         </div>
 
-        {/* Date Display with Streak */}
-        <div className="p-4 md:p-6 rounded-3xl shadow-lg mb-6 date-card" style={{
-          background: currentTheme.bgSecondary
-        }}>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="text-lg md:text-xl font-medium" style={{ color: currentTheme.textPrimary }}>
-                {currentDate}
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-                background: currentTheme.accentLight
-              }}>
-                <span className="text-2xl">🔥</span>
-                <span className="font-bold text-lg" style={{ color: currentTheme.accent }}>
-                  {streak} day streak
-                </span>
-              </div>
+        {/* Date Display */}
+        <div style={styles.dateCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 500, color: currentTheme.textPrimary }}>
+              {currentDate}
             </div>
-            <div className="flex gap-2 md:gap-3 flex-wrap justify-center">
-              {vibes.map(vibe => (
-                <button
-                  key={vibe.name}
-                  onClick={() => setCurrentVibe(vibe.name)}
-                  className="px-4 md:px-5 py-2 md:py-2.5 rounded-full border-2 transition-all duration-300 text-sm md:text-base"
-                  style={{
-                    background: currentVibe === vibe.name ? currentTheme.accent : 'transparent',
-                    color: currentVibe === vibe.name ? '#fff' : currentTheme.textPrimary,
-                    borderColor: currentVibe === vibe.name ? currentTheme.accent : currentTheme.textSecondary + '40',
-                    transform: currentVibe === vibe.name ? 'translateY(-2px)' : 'none'
-                  }}
-                >
-                  {vibe.label}
-                </button>
-              ))}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '24px',
+              background: currentTheme.accentLight
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>🔥</span>
+              <span style={{ fontWeight: 700, fontSize: '1.1rem', color: currentTheme.accent }}>
+                {streak} day streak
+              </span>
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {vibes.map(vibe => (
+              <button
+                key={vibe.name}
+                onClick={() => setCurrentVibe(vibe.name)}
+                style={{
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '24px',
+                  border: `2px solid ${currentVibe === vibe.name ? currentTheme.accent : 'rgba(0,0,0,0.1)'}`,
+                  background: currentVibe === vibe.name ? currentTheme.accent : 'transparent',
+                  color: currentVibe === vibe.name ? '#fff' : currentTheme.textPrimary,
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {vibe.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-3 gap-6 main-grid">
+        {/* Main Grid */}
+        <div style={styles.mainGrid} className="main-grid">
           {/* Pomodoro Timer */}
-          <div className="p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1" style={{
-            background: currentTheme.bgSecondary
-          }}>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2" style={{
-              fontFamily: "'Playfair Display', serif",
-              color: currentTheme.textPrimary
-            }}>
-              ⏰ Pomodoro
-            </h2>
+          <div style={styles.card} className="card">
+            <h2 style={styles.cardTitle}>⏰ Pomodoro</h2>
             
-            <div className={`text-center mb-6 ${isTimerRunning ? 'timer-running' : ''}`}>
-              <div className="text-5xl md:text-7xl font-bold mb-2" style={{
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{
                 fontFamily: "'Playfair Display', serif",
-                color: currentTheme.accent
+                fontSize: '4rem',
+                fontWeight: 700,
+                color: currentTheme.accent,
+                marginBottom: '0.5rem'
               }}>
                 {formatTime(pomodoroTime)}
               </div>
-              <div className="text-sm uppercase tracking-wider" style={{ color: currentTheme.textSecondary }}>
+              <div style={{
+                fontSize: '0.9rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: currentTheme.textSecondary
+              }}>
                 {timerMode === 'work' ? 'Focus Time' : 'Break Time'}
               </div>
             </div>
 
-            <div className="flex gap-3 mb-4">
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
               <button
                 onClick={toggleTimer}
-                className="flex-1 py-3 rounded-2xl font-medium transition-all duration-300 hover:-translate-y-0.5"
                 style={{
+                  flex: 1,
+                  padding: '1rem',
+                  borderRadius: '16px',
+                  border: 'none',
                   background: currentTheme.accent,
-                  color: '#fff'
+                  color: '#fff',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
                 }}
               >
                 {isTimerRunning ? '⏸ Pause' : '▶ Start'}
               </button>
               <button
                 onClick={resetTimer}
-                className="px-6 py-3 rounded-2xl font-medium transition-all duration-300 hover:-translate-y-0.5"
                 style={{
+                  padding: '1rem 1.5rem',
+                  borderRadius: '16px',
+                  border: 'none',
                   background: currentTheme.accentLight,
-                  color: currentTheme.textPrimary
+                  color: currentTheme.textPrimary,
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
                 }}
               >
                 Reset
               </button>
             </div>
 
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={() => {
                   setTimerMode('work');
                   setPomodoroTime(25 * 60);
                   setIsTimerRunning(false);
                 }}
-                className="flex-1 py-2 rounded-xl text-sm transition-all duration-300"
                 style={{
+                  flex: 1,
+                  padding: '0.6rem',
+                  borderRadius: '12px',
+                  border: 'none',
                   background: timerMode === 'work' ? currentTheme.accentLight : currentTheme.bgPrimary,
-                  color: currentTheme.textPrimary
+                  color: currentTheme.textPrimary,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
                 }}
               >
                 25 min
@@ -509,10 +543,15 @@ export default function VibePlanner() {
                   setPomodoroTime(5 * 60);
                   setIsTimerRunning(false);
                 }}
-                className="flex-1 py-2 rounded-xl text-sm transition-all duration-300"
                 style={{
+                  flex: 1,
+                  padding: '0.6rem',
+                  borderRadius: '12px',
+                  border: 'none',
                   background: timerMode === 'break' ? currentTheme.accentLight : currentTheme.bgPrimary,
-                  color: currentTheme.textPrimary
+                  color: currentTheme.textPrimary,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
                 }}
               >
                 5 min
@@ -521,86 +560,81 @@ export default function VibePlanner() {
           </div>
 
           {/* Tasks Card */}
-          <div className="lg:col-span-2 p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1" style={{
-            background: currentTheme.bgSecondary
-          }}>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2" style={{
-              fontFamily: "'Playfair Display', serif",
-              color: currentTheme.textPrimary
-            }}>
-              📋 Today's Tasks
-            </h2>
+          <div style={{ ...styles.card, gridColumn: window.innerWidth > 768 ? 'span 2' : 'span 1' }} className="card">
+            <h2 style={styles.cardTitle}>📋 Today's Tasks</h2>
             
-            <div className="space-y-3 mb-6">
-              <div className="flex gap-3">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
                 <input
                   type="text"
                   value={taskInput}
                   onChange={(e) => setTaskInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addTask()}
                   placeholder="What needs to be done?"
-                  className="flex-1 px-4 md:px-5 py-3 md:py-4 border-2 rounded-2xl focus:outline-none transition-all duration-300 text-sm md:text-base"
-                  style={{ 
+                  style={{
+                    flex: 1,
+                    padding: '1rem',
+                    border: `2px solid rgba(0,0,0,0.1)`,
+                    borderRadius: '16px',
                     background: currentTheme.bgPrimary,
-                    borderColor: currentTheme.textSecondary + '40',
-                    color: currentTheme.textPrimary
+                    color: currentTheme.textPrimary,
+                    fontSize: '1rem',
+                    outline: 'none'
                   }}
                 />
                 <button
                   onClick={addTask}
-                  className="px-6 md:px-8 py-3 md:py-4 rounded-2xl font-medium hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 text-sm md:text-base"
                   style={{
+                    padding: '1rem 2rem',
+                    borderRadius: '16px',
+                    border: 'none',
                     background: currentTheme.accent,
-                    color: '#fff'
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    cursor: 'pointer'
                   }}
                 >
                   Add
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-3 items-center">
-                <div className="flex gap-2">
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {['high', 'medium', 'low'].map(priority => (
                   <button
-                    onClick={() => setTaskPriority('high')}
-                    className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-300"
+                    key={priority}
+                    onClick={() => setTaskPriority(priority)}
                     style={{
-                      background: taskPriority === 'high' ? priorityColors.high : currentTheme.bgPrimary,
-                      color: taskPriority === 'high' ? '#fff' : currentTheme.textPrimary
+                      padding: '0.5rem 1rem',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: taskPriority === priority ? priorityColors[priority] : currentTheme.bgPrimary,
+                      color: taskPriority === priority ? (priority === 'medium' ? '#000' : '#fff') : currentTheme.textPrimary,
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      cursor: 'pointer'
                     }}
                   >
-                    🔴 High
+                    {priority === 'high' ? '🔴' : priority === 'medium' ? '🟡' : '🟢'} {priority.charAt(0).toUpperCase() + priority.slice(1)}
                   </button>
-                  <button
-                    onClick={() => setTaskPriority('medium')}
-                    className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-300"
-                    style={{
-                      background: taskPriority === 'medium' ? priorityColors.medium : currentTheme.bgPrimary,
-                      color: taskPriority === 'medium' ? '#000' : currentTheme.textPrimary
-                    }}
-                  >
-                    🟡 Medium
-                  </button>
-                  <button
-                    onClick={() => setTaskPriority('low')}
-                    className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-300"
-                    style={{
-                      background: taskPriority === 'low' ? priorityColors.low : currentTheme.bgPrimary,
-                      color: taskPriority === 'low' ? '#fff' : currentTheme.textPrimary
-                    }}
-                  >
-                    🟢 Low
-                  </button>
-                </div>
+                ))}
 
-                <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-xs md:text-sm" style={{
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '12px',
                   background: currentTheme.bgPrimary,
-                  color: currentTheme.textPrimary
+                  color: currentTheme.textPrimary,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
                 }}>
                   <input
                     type="checkbox"
                     checked={isRecurring}
                     onChange={(e) => setIsRecurring(e.target.checked)}
-                    className="w-4 h-4"
+                    style={{ width: '16px', height: '16px' }}
                   />
                   <span>🔄 Recurring</span>
                 </label>
@@ -609,11 +643,14 @@ export default function VibePlanner() {
                   <select
                     value={recurringType}
                     onChange={(e) => setRecurringType(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg text-xs md:text-sm"
                     style={{
+                      padding: '0.5rem 1rem',
+                      borderRadius: '12px',
+                      border: 'none',
                       background: currentTheme.bgPrimary,
                       color: currentTheme.textPrimary,
-                      border: 'none'
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
                     }}
                   >
                     <option value="daily">Daily</option>
@@ -623,132 +660,191 @@ export default function VibePlanner() {
               </div>
             </div>
 
-            <ul className="space-y-3 mb-6 max-h-96 overflow-y-auto">
+            <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1.5rem' }}>
               {sortedTasks.map((task) => (
-                <li
+                <div
                   key={task.id}
-                  className={`task-item flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl transition-all duration-300 hover:shadow-md group ${
-                    task.completed ? 'opacity-60' : ''
-                  }`}
-                  style={{ background: currentTheme.bgPrimary }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '1rem',
+                    marginBottom: '0.75rem',
+                    background: currentTheme.bgPrimary,
+                    borderRadius: '16px',
+                    opacity: task.completed ? 0.6 : 1,
+                    transition: 'all 0.3s ease'
+                  }}
                 >
-                  <div
-                    className="w-2 h-8 md:h-10 rounded-full flex-shrink-0"
-                    style={{ background: priorityColors[task.priority] }}
-                  />
+                  <div style={{
+                    width: '4px',
+                    height: '40px',
+                    borderRadius: '4px',
+                    background: priorityColors[task.priority]
+                  }} />
                   <div
                     onClick={() => toggleTask(task.id)}
-                    className="w-5 h-5 md:w-6 md:h-6 rounded-lg border-2 cursor-pointer transition-all duration-300 flex items-center justify-center flex-shrink-0"
                     style={{
-                      borderColor: currentTheme.accent,
-                      background: task.completed ? currentTheme.accent : 'transparent'
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '8px',
+                      border: `2px solid ${currentTheme.accent}`,
+                      background: task.completed ? currentTheme.accent : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontSize: '14px',
+                      flexShrink: 0
                     }}
                   >
-                    {task.completed && <span className="text-white text-xs md:text-sm">✓</span>}
+                    {task.completed && '✓'}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-sm md:text-base block ${task.completed ? 'line-through' : ''}`} style={{
-                      color: task.completed ? currentTheme.textSecondary : currentTheme.textPrimary
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{
+                      color: task.completed ? currentTheme.textSecondary : currentTheme.textPrimary,
+                      textDecoration: task.completed ? 'line-through' : 'none',
+                      display: 'block',
+                      wordBreak: 'break-word'
                     }}>
                       {task.text}
                     </span>
                     {task.recurring && (
-                      <span className="text-xs" style={{ color: currentTheme.textSecondary }}>
+                      <span style={{ fontSize: '0.75rem', color: currentTheme.textSecondary }}>
                         🔄 {task.recurringType}
                       </span>
                     )}
                   </div>
                   <button
                     onClick={() => deleteTask(task.id)}
-                    className="text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-125 flex-shrink-0"
-                    style={{ color: currentTheme.textSecondary }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: currentTheme.textSecondary,
+                      fontSize: '1.5rem',
+                      cursor: 'pointer',
+                      padding: '0.25rem',
+                      flexShrink: 0
+                    }}
                   >
                     ×
                   </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
 
-            <div className="grid grid-cols-3 gap-3 md:gap-4">
-              <div className="p-4 md:p-5 rounded-2xl text-center" style={{ background: currentTheme.bgPrimary }}>
-                <div className="text-2xl md:text-3xl font-bold" style={{ 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div style={{
+                padding: '1.5rem',
+                borderRadius: '16px',
+                background: currentTheme.bgPrimary,
+                textAlign: 'center'
+              }}>
+                <div style={{
                   fontFamily: "'Playfair Display', serif",
+                  fontSize: '2rem',
+                  fontWeight: 700,
                   color: currentTheme.accent
-                }}>
-                  {stats.total}
-                </div>
-                <div className="text-xs uppercase tracking-wider mt-1" style={{ color: currentTheme.textSecondary }}>
-                  Total
-                </div>
+                }}>{stats.total}</div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: currentTheme.textSecondary,
+                  marginTop: '0.25rem'
+                }}>Total</div>
               </div>
-              <div className="p-4 md:p-5 rounded-2xl text-center" style={{ background: currentTheme.bgPrimary }}>
-                <div className="text-2xl md:text-3xl font-bold" style={{ 
+              <div style={{
+                padding: '1.5rem',
+                borderRadius: '16px',
+                background: currentTheme.bgPrimary,
+                textAlign: 'center'
+              }}>
+                <div style={{
                   fontFamily: "'Playfair Display', serif",
+                  fontSize: '2rem',
+                  fontWeight: 700,
                   color: currentTheme.accent
-                }}>
-                  {stats.completed}
-                </div>
-                <div className="text-xs uppercase tracking-wider mt-1" style={{ color: currentTheme.textSecondary }}>
-                  Done
-                </div>
+                }}>{stats.completed}</div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: currentTheme.textSecondary,
+                  marginTop: '0.25rem'
+                }}>Done</div>
               </div>
-              <div className="p-4 md:p-5 rounded-2xl text-center" style={{ background: currentTheme.bgPrimary }}>
-                <div className="text-2xl md:text-3xl font-bold" style={{ 
+              <div style={{
+                padding: '1.5rem',
+                borderRadius: '16px',
+                background: currentTheme.bgPrimary,
+                textAlign: 'center'
+              }}>
+                <div style={{
                   fontFamily: "'Playfair Display', serif",
+                  fontSize: '2rem',
+                  fontWeight: 700,
                   color: currentTheme.accent
-                }}>
-                  {stats.progress}%
-                </div>
-                <div className="text-xs uppercase tracking-wider mt-1" style={{ color: currentTheme.textSecondary }}>
-                  Progress
-                </div>
+                }}>{stats.progress}%</div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: currentTheme.textSecondary,
+                  marginTop: '0.25rem'
+                }}>Progress</div>
               </div>
             </div>
           </div>
 
           {/* Notes Card */}
-          <div className="p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1" style={{
-            background: currentTheme.bgSecondary
-          }}>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2" style={{
-              fontFamily: "'Playfair Display', serif",
-              color: currentTheme.textPrimary
-            }}>
-              💭 Notes
-            </h2>
+          <div style={styles.card} className="card">
+            <h2 style={styles.cardTitle}>💭 Notes</h2>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Jot down ideas, reflections..."
-              className="w-full h-48 md:h-64 p-4 md:p-5 border-2 rounded-2xl focus:outline-none transition-all duration-300 resize-none text-sm md:text-base"
-              style={{ 
+              style={{
+                width: '100%',
+                height: '250px',
+                padding: '1rem',
+                border: `2px solid rgba(0,0,0,0.1)`,
+                borderRadius: '16px',
                 background: currentTheme.bgPrimary,
-                borderColor: currentTheme.textSecondary + '40',
+                color: currentTheme.textPrimary,
+                fontSize: '1rem',
                 lineHeight: '1.6',
-                color: currentTheme.textPrimary
+                resize: 'vertical',
+                outline: 'none',
+                fontFamily: "'DM Sans', sans-serif"
               }}
             />
           </div>
 
-          {/* Mood Tracker Card */}
-          <div className="lg:col-span-2 p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1" style={{
-            background: currentTheme.bgSecondary
-          }}>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2" style={{
-              fontFamily: "'Playfair Display', serif",
-              color: currentTheme.textPrimary
+          {/* Mood Tracker */}
+          <div style={{ ...styles.card, gridColumn: window.innerWidth > 768 ? 'span 2' : 'span 1' }} className="card">
+            <h2 style={styles.cardTitle}>🌈 Today's Mood</h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+              gap: '1rem'
             }}>
-              🌈 Today's Mood
-            </h2>
-            <div className="grid grid-cols-5 gap-3 md:gap-4">
               {moods.map((mood) => (
                 <button
                   key={mood.name}
                   onClick={() => setCurrentMood(mood.name)}
-                  className="aspect-square border-2 rounded-2xl text-3xl md:text-5xl flex items-center justify-center transition-all duration-300 hover:scale-110"
                   style={{
+                    aspectRatio: '1',
+                    border: `2px solid ${currentMood === mood.name ? currentTheme.accent : 'rgba(0,0,0,0.1)'}`,
+                    borderRadius: '16px',
                     background: currentMood === mood.name ? currentTheme.accentLight : currentTheme.bgPrimary,
-                    borderColor: currentMood === mood.name ? currentTheme.accent : currentTheme.textSecondary + '40',
+                    fontSize: '3rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.3s ease',
                     transform: currentMood === mood.name ? 'scale(1.05)' : 'scale(1)'
                   }}
                 >
